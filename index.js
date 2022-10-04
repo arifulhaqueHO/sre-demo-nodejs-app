@@ -41,15 +41,28 @@ function getTotal() {
 	return successful.Counter + exceptions.Counter;
 }
 
-app.get('/metrics', (req, res) => {
+app.get('/metrics', async (req, res) => {
   res.setHeader('Content-Type', register.contentType);
-  res.send(register.metrics());
+  res.send(await register.metrics());
 });
 
 app.get('/', (req, res) => {
-  res.render('index.html', {successful: successful.Counter, exceptions: exceptions.Counter, total: getTotal()});
+	console.log(successful);
+	console.log(exceptions);
+  res.render('index.html', {successful: successful, exceptions: exceptions, total: getTotal()});
 });
 
+app.post('/success', (req, res) =>{
+	console.log("In success");
+	successful.inc();
+	res.redirect('/');
+});
+
+app.post('/exception', (req ,res) =>{
+	console.log("In exception");
+	exceptions.inc();
+	res.redirect('/');
+});
 
 app.listen(PORT, () => {
   console.log(`sre-demo-nodejs-app listening on port: http://localhost:${PORT}`);
