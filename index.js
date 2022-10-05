@@ -3,7 +3,6 @@ const bodyParser = require('body-parser');
 
 const nunjucks = require('nunjucks');
 const promClient = require('prom-client');
-const {last} = require("nunjucks/src/filters");
 
 const PORT = 8081;
 const app = express();
@@ -49,7 +48,6 @@ const getCounterValue = async name => {
     return Promise.resolve(good);
 }
 
-
 const getLastSuccessValue = async () => {
     return getCounterValue("simple_counter1");
 }
@@ -66,24 +64,18 @@ app.get('/metrics', async (req, res) => {
 app.get('/', async (req, res) => {
     const good = await getLastSuccessValue();
     const bad = await getLastExceptionValue();
-    console.log({
-        good, bad
-    })
-
     const total = good + bad;
     res.render('index.html', {successful: good, exceptions: bad, total});
 });
 
 app.post('/success', (req, res) => {
     const inc = Number.parseInt(req.body.amount, 10);
-    console.log("In success");
     successful.inc(inc);
     res.redirect('/');
 });
 
 app.post('/exception', (req, res) => {
     const inc = Number.parseInt(req.body.amount, 10);
-    console.log("In exception");
     exceptions.inc(inc);
     res.redirect('/');
 });
@@ -91,4 +83,3 @@ app.post('/exception', (req, res) => {
 app.listen(PORT, () => {
     console.log(`sre-demo-nodejs-app listening on port: http://localhost:${PORT}`);
 });
-
