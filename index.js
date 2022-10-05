@@ -26,34 +26,36 @@ promClient.collectDefaultMetrics({
     register,
 })
 
-const successful = new promClient.Counter({
-    name: 'simple_counter1',
+const counter = new promClient.Counter({
+    name: 'simple_counter',
     help: 'A demo counter metric',
-    status: 'SUCCESS',
+    labelNames: [
+    "status"
+    ]
 });
 
-const exceptions = new promClient.Counter({
-    name: 'simple_counter2',
-    help: 'A demo counter metric',
-    status: 'EXCEPTION',
-});
+register.registerMetric(counter);
 
-register.registerMetric(successful);
-register.registerMetric(exceptions);
+const getCounterValue = async (name, label) => {
+    const metricValue = await register.getSingleMetricAsString(name);
+    console.log({metricValue})
+    const result = metricValue.split('\n').filter(value => value.includes(label));
 
-const getCounterValue = async name => {
-    const theGood = await register.getSingleMetricAsString(name);
-    const matches = theGood.match(/(\d+)$/);
-    const good = matches.length > 1 ? Number.parseInt(matches[matches.length - 1], 10) : 0;
-    return Promise.resolve(good);
+    if (result.length === 0) {
+        return Promise.resolve(0);
+    }
+
+    const matches = result[0].match(/(\d+)$/);
+    const value = matches.length > 1 ? Number.parseInt(matches[matches.length - 1], 10) : 0;
+    return Promise.resolve(value);
 }
 
 const getLastSuccessValue = async () => {
-    return getCounterValue("simple_counter1");
+    return getCounterValue("simple_counter", "SUCCESS");
 }
 
 const getLastExceptionValue = async () => {
-    return getCounterValue("simple_counter2");
+    return getCounterValue("simple_counter", "EXCEPTION");
 }
 
 app.get('/metrics', async (req, res) => {
@@ -70,13 +72,13 @@ app.get('/', async (req, res) => {
 
 app.post('/success', (req, res) => {
     const inc = Number.parseInt(req.body.amount, 10);
-    successful.inc(inc);
+    counter.labels({ status: "SUCCESS" }).inc(inc);
     res.redirect('/');
 });
 
 app.post('/exception', (req, res) => {
     const inc = Number.parseInt(req.body.amount, 10);
-    exceptions.inc(inc);
+    counter.labels({ status: "EXCEPTION" }).inc(inc);
     res.redirect('/');
 });
 
