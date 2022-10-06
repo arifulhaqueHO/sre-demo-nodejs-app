@@ -26,8 +26,10 @@ promClient.collectDefaultMetrics({
     register,
 })
 
+const metricName = "simple_counter_total";
+
 const counter = new promClient.Counter({
-    name: 'simple_counter',
+    name: metricName,
     help: 'A demo counter metric',
     labelNames: [
     "status"
@@ -51,11 +53,11 @@ const getCounterValue = async (name, label) => {
 }
 
 const getLastSuccessValue = async () => {
-    return getCounterValue("simple_counter", "SUCCESS");
+    return getCounterValue(metricName, "SUCCESS");
 }
 
 const getLastExceptionValue = async () => {
-    return getCounterValue("simple_counter", "EXCEPTION");
+    return getCounterValue(metricName, "EXCEPTION");
 }
 
 app.get('/metrics', async (req, res) => {
@@ -71,13 +73,13 @@ app.get('/', async (req, res) => {
 });
 
 app.post('/success', (req, res) => {
-    const inc = Number.parseInt(req.body.amount, 10);
+    const inc = Number.parseFloat(req.body.amount);
     counter.labels({ status: "SUCCESS" }).inc(inc);
     res.redirect('/');
 });
 
 app.post('/exception', (req, res) => {
-    const inc = Number.parseInt(req.body.amount, 10);
+    const inc = Number.parseFloat(req.body.amount);
     counter.labels({ status: "EXCEPTION" }).inc(inc);
     res.redirect('/');
 });
