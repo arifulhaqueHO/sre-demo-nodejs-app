@@ -1,11 +1,13 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const promBundle = require('express-prom-bundle');
 
 const nunjucks = require('nunjucks');
 const promClient = require('prom-client');
 
 const PORT = 8081;
 const app = express();
+
 app.use(bodyParser.urlencoded({extended: true}));
 
 nunjucks.configure('views', {
@@ -15,6 +17,15 @@ nunjucks.configure('views', {
 
 // Create a Registry which registers the metrics
 const register = new promClient.Registry();
+
+const expressPromMiddleware = promBundle({
+    includeMethod: true,
+    includePath: true,
+    includeStatusCode: true,
+    promCLient: promClient,
+    promRegistry: register
+});
+app.use(expressPromMiddleware);
 
 // Add a default label which is added to all metrics
 register.setDefaultLabels({
@@ -40,7 +51,6 @@ register.registerMetric(counter);
 
 const getCounterValue = async (name, label) => {
     const metricValue = await register.getSingleMetricAsString(name);
-    console.log({metricValue})
     const result = metricValue.split('\n').filter(value => value.includes(label));
 
     if (result.length === 0) {
